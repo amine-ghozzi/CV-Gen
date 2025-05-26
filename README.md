@@ -12,7 +12,7 @@ Une application web qui utilise l'IA pour adapter votre CV à une offre d'emploi
 
 ## Prérequis
 
-- Python 3.7 ou supérieur
+- Python 3.11
 - pip (gestionnaire de paquets Python)
 - Une clé API OpenAI
 - Un compte Azure (pour le déploiement)
@@ -51,7 +51,7 @@ az login
 
 2. Créez un groupe de ressources :
 ```bash
-az group create --name cv-generator-rg --location westeurope
+az group create --name cv-generator-rg --location canadacentral
 ```
 
 3. Créez un plan App Service :
@@ -59,14 +59,14 @@ az group create --name cv-generator-rg --location westeurope
 az appservice plan create --name cv-generator-plan --resource-group cv-generator-rg --sku B1 --is-linux
 ```
 
-4. Créez l'application web :
+4. Créez l'application web avec Python 3.11 :
 ```bash
-az webapp create --name cv-generator-app --resource-group cv-generator-rg --plan cv-generator-plan --runtime "PYTHON|3.9"
+az webapp create --name cv-generator-app --resource-group cv-generator-rg --plan cv-generator-plan --runtime "PYTHON|3.11"
 ```
 
 5. Configurez les variables d'environnement :
 ```bash
-az webapp config appsettings set --name cv-generator-app --resource-group cv-generator-rg --settings OPENAI_API_KEY="votre_clé_api_ici" SECRET_KEY="votre_clé_secrète_ici"
+az webapp config appsettings set --name cv-generator-app --resource-group cv-generator-rg --settings OPENAI_API_KEY="votre_clé_api_ici" SECRET_KEY="votre_clé_secrète_ici" WEBSITE_PYTHON_VERSION="3.11"
 ```
 
 6. Déployez l'application :
