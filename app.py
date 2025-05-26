@@ -12,7 +12,7 @@ from utils.cv_generator import generate_adapted_cv
 load_dotenv()
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.urandom(24)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', os.urandom(24))
 openai.api_key = os.getenv('OPENAI_API_KEY')
 
 class CVForm(FlaskForm):
@@ -62,4 +62,5 @@ def generate_cv():
     return jsonify({'adapted_cv': adapted_cv})
 
 if __name__ == '__main__':
-    app.run(debug=True) 
+    port = int(os.getenv('PORT', 5000))
+    app.run(host='0.0.0.0', port=port) 
