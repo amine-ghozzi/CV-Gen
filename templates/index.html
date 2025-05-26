@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Générateur de CV Adapté</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .main-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .form-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            border: 1px solid #dee2e6;
+            border-radius: 5px;
+        }
+        .btn-primary {
+            background-color: #0d6efd;
+            border: none;
+            padding: 0.5rem 2rem;
+        }
+        .btn-primary:hover {
+            background-color: #0b5ed7;
+        }
+    </style>
+</head>
+<body>
+    <div class="container main-container">
+        <h1 class="text-center mb-4">Générateur de CV Adapté</h1>
+        
+        <!-- Section URL de l'offre d'emploi -->
+        <div class="form-section">
+            <h3><i class="fas fa-link"></i> Offre d'emploi</h3>
+            <div class="mb-3">
+                <label for="jobUrl" class="form-label">URL de l'offre d'emploi</label>
+                <input type="url" class="form-control" id="jobUrl" placeholder="https://...">
+            </div>
+            <button class="btn btn-primary" onclick="extractJobDescription()">
+                <i class="fas fa-sync"></i> Extraire l'offre
+            </button>
+        </div>
+
+        <!-- Section Upload CV -->
+        <div class="form-section">
+            <h3><i class="fas fa-file-upload"></i> Télécharger votre CV</h3>
+            <div class="mb-3">
+                <label for="cvFile" class="form-label">CV (PDF ou Word)</label>
+                <input type="file" class="form-control" id="cvFile" accept=".pdf,.docx">
+            </div>
+            <button class="btn btn-primary" onclick="uploadCV()">
+                <i class="fas fa-upload"></i> Télécharger
+            </button>
+        </div>
+
+        <!-- Section Formulaire manuel -->
+        <div class="form-section">
+            <h3><i class="fas fa-edit"></i> Saisie manuelle</h3>
+            <form method="POST" id="cvForm">
+                {{ form.csrf_token }}
+                <div class="mb-3">
+                    {{ form.full_name.label(class="form-label") }}
+                    {{ form.full_name(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.email.label(class="form-label") }}
+                    {{ form.email(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.phone.label(class="form-label") }}
+                    {{ form.phone(class="form-control") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.experience.label(class="form-label") }}
+                    {{ form.experience(class="form-control", rows="5") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.education.label(class="form-label") }}
+                    {{ form.education(class="form-control", rows="3") }}
+                </div>
+                <div class="mb-3">
+                    {{ form.skills.label(class="form-label") }}
+                    {{ form.skills(class="form-control", rows="3") }}
+                </div>
+                {{ form.submit(class="btn btn-primary") }}
+            </form>
+        </div>
+
+        <!-- Section Résultat -->
+        <div class="form-section" id="resultSection" style="display: none;">
+            <h3><i class="fas fa-file-alt"></i> CV Adapté</h3>
+            <div id="adaptedCV" class="p-3 bg-light rounded"></div>
+            <button class="btn btn-primary mt-3" onclick="downloadCV()">
+                <i class="fas fa-download"></i> Télécharger
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function extractJobDescription() {
+            const url = document.getElementById('jobUrl').value;
+            if (!url) {
+                alert('Veuillez entrer une URL');
+                return;
+            }
+
+            try {
+                const response = await fetch('/extract-job', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('Offre d\'emploi extraite avec succès !');
+                }
+            } catch (error) {
+                alert('Erreur lors de l\'extraction de l\'offre d\'emploi');
+            }
+        }
+
+        async function uploadCV() {
+            const fileInput = document.getElementById('cvFile');
+            if (!fileInput.files.length) {
+                alert('Veuillez sélectionner un fichier');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('cv_file', fileInput.files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData,
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    alert('CV téléchargé avec succès !');
+                }
+            } catch (error) {
+                alert('Erreur lors du téléchargement du CV');
+            }
+        }
+
+        async function generateCV() {
+            const form = document.getElementById('cvForm');
+            const formData = new FormData(form);
+            const cvData = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch('/generate-cv', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        cv_data: cvData,
+                        job_description: document.getElementById('jobUrl').value,
+                    }),
+                });
+                const data = await response.json();
+                if (data.error) {
+                    alert(data.error);
+                } else {
+                    document.getElementById('adaptedCV').innerHTML = data.adapted_cv;
+                    document.getElementById('resultSection').style.display = 'block';
+                }
+            } catch (error) {
+                alert('Erreur lors de la génération du CV');
+            }
+        }
+
+        function downloadCV() {
+            const content = document.getElementById('adaptedCV').innerText;
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'cv_adapte.txt';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html> 
